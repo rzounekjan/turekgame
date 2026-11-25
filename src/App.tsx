@@ -528,49 +528,65 @@ export default function App() {
 
       {/* TITLE SCREEN OVERLAY */}
       {hud.phase === 'title' && (
-        <main className="absolute inset-0 z-20 flex flex-col items-center justify-center overflow-y-auto bg-gradient-to-b from-[#050814]/80 via-[#050814]/45 to-[#050814]/88 px-4 py-20 text-center">
-          <NeonTitleTurek className="mb-5" />
+        <main className="absolute inset-0 z-20 flex flex-col items-center justify-between overflow-y-auto bg-gradient-to-b from-[#050814]/80 via-[#050814]/45 to-[#050814]/88 px-4 pt-20 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center">
+          <div className="my-auto flex w-full flex-col items-center py-4">
+            <NeonTitleTurek className="mb-5" />
 
-          <p className="max-w-md text-sm sm:text-base text-slate-200 leading-relaxed mb-7">
-            Řiď černé SUV v šesti dálničních pruzích. Vyhýbej se protijedoucím autům za bod a srážej sanitky pro bonusových +{AMBULANCE_HIT_POINTS} bodů.
-          </p>
+            <p className="max-w-md text-sm sm:text-base text-slate-200 leading-relaxed mb-7">
+              Řiď černé SUV v šesti dálničních pruzích. Vyhýbej se protijedoucím autům za bod a srážej sanitky pro bonusových +{AMBULANCE_HIT_POINTS} bodů.
+            </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm justify-center">
-            <button
-              type="button"
-              onClick={handleStart}
-              className="flex h-12 w-full sm:w-auto sm:min-w-[200px] items-center justify-center gap-2 rounded-xl bg-cyan-400 px-6 font-display text-base font-extrabold tracking-wider text-slate-950 shadow-[0_0_24px_rgba(0,240,255,0.45)] transition-transform duration-150 hover:bg-cyan-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <Play className="h-5 w-5 fill-slate-950" />
-              Spustit jízdu
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm justify-center">
+              <button
+                type="button"
+                onClick={handleStart}
+                className="flex h-12 w-full sm:w-auto sm:min-w-[200px] items-center justify-center gap-2 rounded-xl bg-cyan-400 px-6 font-display text-base font-extrabold tracking-wider text-slate-950 shadow-[0_0_24px_rgba(0,240,255,0.45)] transition-transform duration-150 hover:bg-cyan-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Play className="h-5 w-5 fill-slate-950" />
+                Spustit jízdu
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setLeaderboardOpen(true);
-                loadLeaderboard();
-              }}
-              className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/18 bg-[#0b1224]/92 px-5 font-display text-sm font-bold tracking-wide text-slate-100 transition-colors hover:border-amber-400/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <Trophy className="h-4 w-4 text-amber-400" />
-              Žebříček
-            </button>
-          </div>
-
-          {hud.bestLocalScore > 0 && (
-            <div className="mt-5 text-xs text-slate-300">
-              Tvůj osobní rekord:{' '}
-              <span className="font-mono-num font-bold text-cyan-300">
-                {hud.bestLocalScore} bodů
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setLeaderboardOpen(true);
+                  loadLeaderboard();
+                }}
+                className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/18 bg-[#0b1224]/92 px-5 font-display text-sm font-bold tracking-wide text-slate-100 transition-colors hover:border-amber-400/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Trophy className="h-4 w-4 text-amber-400" />
+                Žebříček
+              </button>
             </div>
-          )}
 
-          {/* Single flat control hint line */}
-          <div className="mt-7 text-xs text-slate-400">
-            Levá / pravá strana displeje nebo šipky · Auta +1 · Sanitka +{AMBULANCE_HIT_POINTS} · Zrychlení každých 10 bodů
+            {hud.bestLocalScore > 0 && (
+              <div className="mt-5 text-xs text-slate-300">
+                Tvůj osobní rekord:{' '}
+                <span className="font-mono-num font-bold text-cyan-300">
+                  {hud.bestLocalScore} bodů
+                </span>
+              </div>
+            )}
+
+            {/* Single flat control hint line */}
+            <div className="mt-7 text-xs text-slate-400">
+              Levá / pravá strana displeje nebo šipky · Auta +1 · Sanitka +{AMBULANCE_HIT_POINTS} · Zrychlení každých 10 bodů
+            </div>
           </div>
+
+          <footer className="mt-4 shrink-0 px-2 pt-2 text-center">
+            <p className="font-display text-xs sm:text-sm font-semibold tracking-[0.12em]">
+              <span className="neon-broken-label">Vytvořil: </span>
+              <a
+                href="https://www.ekonomickykompas.cz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="neon-broken-link underline decoration-pink-400/40 underline-offset-4 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 rounded-sm"
+              >
+                www.ekonomickykompas.cz
+              </a>
+            </p>
+          </footer>
         </main>
       )}
 
