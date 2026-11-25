@@ -1,0 +1,6 @@
+{
+  "name": "TUREK",
+  "description": "3D neonová arkádová dálniční hra TUREK se 6 pruhy, černým SUV, bonusovými sanitkami, 5 úrovněmi a globálním žebříčkem.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
