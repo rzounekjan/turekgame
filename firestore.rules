@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pillar 1 / Phase 4.1: Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Reusable hardened primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Pillar 2: Validation Blueprint for LeaderboardEntry (synchronized with firebase-blueprint.json)
+    function isValidLeaderboardEntry(data) {
+      return data.keys().hasAll(['playerName', 'score', 'level', 'ambulancesHit', 'createdAt'])
+        && data.keys().hasOnly(['playerName', 'score', 'level', 'ambulancesHit', 'createdAt'])
+        && data.playerName is string
+        && data.playerName.size() >= 2
+        && data.playerName.size() <= 16
+        && data.playerName.matches('^[\\p{L}\\p{N}_\\-\\.][\\p{L}\\p{N}_\\-\\. ]{0,14}[\\p{L}\\p{N}_\\-\\.]$')
+        && data.score is int
+        && data.score >= 0
+        && data.score <= 100000
+        && data.level is int
+        && data.level >= 1
+        && data.level <= 5
+        && data.ambulancesHit is int
+        && data.ambulancesHit >= 0
+        && data.ambulancesHit <= 10000
+        && data.ambulancesHit * 5 <= data.score
+        && data.createdAt is timestamp
+        && data.createdAt == request.time;
+    }
+
+    // Public global arcade leaderboard (Zero PII, append-only, bounded queries)
+    match /leaderboard/{entryId} {
+      // Single-document read with path ID hardening
+      allow get: if isValidId(entryId)
+        && existing().score >= 0;
+
+      // Bounded public list query (enforces query filter where('score', '>=', 0) + page cap, no get() lookups)
+      allow list: if existing().score >= 0
+        && request.query.limit != null
+        && request.query.limit <= 50;
+
+      // Append-only public score submission with strict schema, bounds, and server timestamp
+      allow create: if isValidId(entryId)
+        && isValidLeaderboardEntry(incoming());
+
+      // Scores are permanently immutable — no updates or deletions allowed from clients
+      allow update, delete: if false;
+    }
+  }
+}

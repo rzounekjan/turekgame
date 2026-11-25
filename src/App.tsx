@@ -26,6 +26,7 @@ import {
   saveLocalBestScore,
   saveMuted,
   submitGlobalScore,
+  subscribeGlobalLeaderboard,
 } from './services/leaderboard';
 import type { HudSnapshot, LeaderboardEntry, ScorePopupEvent } from './types/game';
 
@@ -84,15 +85,29 @@ export default function App() {
     try {
       const entries = await fetchGlobalLeaderboard();
       setLeaderboardEntries(entries);
+    } catch {
+      // Structured Firestore error is already logged by handleFirestoreError
     } finally {
       setLeaderboardLoading(false);
     }
   }, []);
 
-  // Load leaderboard once on mount
+  // Subscribe to real-time global Firestore leaderboard updates on mount
   useEffect(() => {
-    loadLeaderboard();
-  }, [loadLeaderboard]);
+    setLeaderboardLoading(true);
+    const unsubscribe = subscribeGlobalLeaderboard(
+      (entries) => {
+        setLeaderboardEntries(entries);
+        setLeaderboardLoading(false);
+      },
+      () => {
+        setLeaderboardLoading(false);
+      },
+    );
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Mount isolated Three.js engine once
   useEffect(() => {
@@ -310,7 +325,14 @@ export default function App() {
       setHighlightedId(result.entry.id);
       setSubmittedRank(result.rank);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Chyba při ukládání.');
+      const rawMsg = err instanceof Error ? err.message : '';
+      if (rawMsg.includes('Quota exceeded')) {
+        setSubmitError('Denní limit databáze byl vyčerpán. Zkuste to prosím zítra.');
+      } else if (rawMsg.startsWith('{') && rawMsg.includes('"operationType"')) {
+        setSubmitError('Nepodařilo se uložit skóre do globálního žebříčku.');
+      } else {
+        setSubmitError(rawMsg || 'Chyba při ukládání.');
+      }
     } finally {
       setSubmittingScore(false);
     }

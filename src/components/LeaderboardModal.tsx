@@ -141,7 +141,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-white/10 px-5 py-3 text-xs text-slate-400">
-          <span>Top 20 globálních jezdců</span>
+          <span>Globální živý žebříček · Top 20</span>
           <button
             type="button"
             onClick={onClose}

@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "A single public arcade score entry in the global TUREK highway leaderboard. Contains zero PII.",
+      "type": "object",
+      "properties": {
+        "playerName": {
+          "type": "string",
+          "description": "Public arcade nickname displayed on the global leaderboard.",
+          "minLength": 2,
+          "maxLength": 16,
+          "pattern": "^[\\p{L}\\p{N}_\\-\\.][\\p{L}\\p{N}_\\-\\. ]{0,14}[\\p{L}\\p{N}_\\-\\.]$"
+        },
+        "score": {
+          "type": "integer",
+          "description": "Total final score achieved during the run (0 to 100000)."
+        },
+        "level": {
+          "type": "integer",
+          "description": "Highest level reached during the run (1 to 5)."
+        },
+        "ambulancesHit": {
+          "type": "integer",
+          "description": "Total bonus ambulances hit during the run (0 to 10000)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-assigned Firestore timestamp recording when the score was submitted."
+        }
+      },
+      "required": ["playerName", "score", "level", "ambulancesHit", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/leaderboard/{entryId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Global public arcade leaderboard collection. Append-only (create + bounded read/list); updates and deletes are strictly forbidden."
+    }
+  }
+}
