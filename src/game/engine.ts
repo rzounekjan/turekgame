@@ -160,11 +160,16 @@ export class TurekGameEngine {
   private elapsedTime = 0;
   private demoSteerTimer = 0;
 
-  // Loop & throttling
+  // Loop, adaptive FPS governor & HUD dirty-check
+  private readonly isMobileGpu: boolean;
+  private currentDpr = 1;
+  private avgFrameMs = 16.6;
+  private slowFrameStreak = 0;
   private frameId = 0;
   private disposed = false;
   private lastTimestamp = 0;
   private hudSyncTimer = 0;
+  private lastHudSignature = '';
   private popupCounter = 1;
   private contextLost = false;
 
@@ -182,21 +187,31 @@ export class TurekGameEngine {
     this.callbacks = callbacks;
     this.bestLocalScore = initialBestScore;
     this.isSoftwareGl = detectSoftwareWebGL();
+    this.isMobileGpu =
+      !this.isSoftwareGl &&
+      (window.matchMedia?.('(pointer: coarse)').matches ||
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
 
-    // Renderer configured for crisp antialiasing & mobile GPU optimization
+    const maxTargetDpr = this.isSoftwareGl
+      ? 1
+      : Math.min(window.devicePixelRatio || 1, this.isMobileGpu ? 1.5 : 2);
+    this.currentDpr = maxTargetDpr;
+
+    // Renderer configured for crisp antialiasing & high-FPS mobile GPU performance
     this.renderer = new THREE.WebGLRenderer({
       antialias: !this.isSoftwareGl,
       powerPreference: 'high-performance',
       alpha: false,
+      stencil: false,
     });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
-    this.renderer.setPixelRatio(
-      this.isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2),
-    );
-    this.renderer.shadowMap.enabled = !this.isSoftwareGl;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.setPixelRatio(this.currentDpr);
+    // Every vehicle has a grounded contact shadow plane; skip heavy real-time shadow pass on mobile GPUs for 60/120fps
+    const enableDynamicShadows = !this.isSoftwareGl && !this.isMobileGpu;
+    this.renderer.shadowMap.enabled = enableDynamicShadows;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.domElement.style.display = 'block';
     this.renderer.domElement.style.width = '100%';
     this.renderer.domElement.style.height = '100%';
@@ -228,9 +243,9 @@ export class TurekGameEngine {
 
     this.keyLight = new THREE.DirectionalLight(0xfff4e0, 1.85);
     this.keyLight.position.set(14, 34, 18);
-    if (!this.isSoftwareGl) {
+    if (enableDynamicShadows) {
       this.keyLight.castShadow = true;
-      this.keyLight.shadow.mapSize.set(1024, 1024);
+      this.keyLight.shadow.mapSize.set(512, 512);
       this.keyLight.shadow.camera.near = 5;
       this.keyLight.shadow.camera.far = 95;
       const d = 24;
@@ -742,9 +757,7 @@ export class TurekGameEngine {
     this.camera.fov = this.baseFov;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
-    this.renderer.setPixelRatio(
-      this.isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2),
-    );
+    this.renderer.setPixelRatio(this.currentDpr);
   };
 
   private handleWindowBlur = (): void => {
@@ -788,19 +801,35 @@ export class TurekGameEngine {
   private scheduleNextFrame(): void {
     if (this.disposed) return;
     if (this.isSoftwareGl) {
-      this.afterDraw(this.tick);
+      this.afterDraw(() => this.tick(performance.now()));
     } else {
       this.frameId = requestAnimationFrame(this.tick);
     }
   }
 
-  private tick = (): void => {
+  private tick = (timestamp: number = performance.now()): void => {
     if (this.disposed) return;
 
-    const now = performance.now();
-    const rawDt = (now - this.lastTimestamp) / 1000;
-    this.lastTimestamp = now;
-    const dt = Math.min(Math.max(rawDt, 0.001), 0.05);
+    const rawMs = this.lastTimestamp > 0 ? timestamp - this.lastTimestamp : 16.67;
+    this.lastTimestamp = timestamp;
+    const clampedMs = Math.min(Math.max(rawMs, 1), 50);
+
+    // Adaptive DPR governor on hardware GPUs: keeps motion silky smooth on slower phones
+    if (!this.isSoftwareGl && this.phase === 'playing') {
+      this.avgFrameMs = this.avgFrameMs * 0.92 + clampedMs * 0.08;
+      if (this.avgFrameMs > 21.5 && this.currentDpr > 0.9) {
+        this.slowFrameStreak++;
+        if (this.slowFrameStreak >= 40) {
+          this.slowFrameStreak = 0;
+          this.currentDpr = Math.max(0.9, Number((this.currentDpr - 0.25).toFixed(2)));
+          this.renderer.setPixelRatio(this.currentDpr);
+        }
+      } else {
+        this.slowFrameStreak = 0;
+      }
+    }
+
+    const dt = clampedMs / 1000;
 
     if (!this.contextLost) {
       this.update(dt);
@@ -1380,8 +1409,14 @@ export class TurekGameEngine {
     };
   }
 
-  private emitHud(): void {
-    this.callbacks.onHudUpdate(this.buildHudSnapshot());
+  private emitHud(force = false): void {
+    const snap = this.buildHudSnapshot();
+    const sig = `${snap.phase}|${snap.score}|${snap.bestLocalScore}|${snap.level}|${snap.speedKmh}|${snap.dodgedCars}|${snap.ambulancesHit}|${snap.ambulanceNearby ? 1 : 0}`;
+    if (!force && sig === this.lastHudSignature) {
+      return;
+    }
+    this.lastHudSignature = sig;
+    this.callbacks.onHudUpdate(snap);
   }
 
   public dispose(): void {

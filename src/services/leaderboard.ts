@@ -157,13 +157,3 @@ export async function submitGlobalScore(payload: {
     return { entries: merged, entry: fallbackEntry, rank: rank || 20 };
   }
 }
-
-export async function resetGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
-  writeLocalCache([]);
-  try {
-    await fetch('/api/leaderboard', { method: 'DELETE' });
-  } catch {
-    // Offline or static host — local cache already cleared
-  }
-  return [];
-}

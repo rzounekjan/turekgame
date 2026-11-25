@@ -35,16 +35,16 @@ export class VehicleAssetLibrary {
   private readonly ambulanceStripeMat: THREE.MeshStandardMaterial;
   private readonly ambulanceRedMat: THREE.MeshStandardMaterial;
 
-  private readonly paintMaterials: THREE.MeshPhysicalMaterial[] = [];
+  private readonly paintMaterials: THREE.MeshStandardMaterial[] = [];
 
   constructor(
     contactShadowTex: THREE.Texture,
     ambulanceRoofTex: THREE.Texture,
   ) {
-    this.wheelGeo = this.trackGeo(new THREE.CylinderGeometry(0.36, 0.36, 0.28, 14));
+    this.wheelGeo = this.trackGeo(new THREE.CylinderGeometry(0.36, 0.36, 0.28, 10));
     this.wheelGeo.rotateZ(Math.PI / 2);
 
-    this.rimGeo = this.trackGeo(new THREE.CylinderGeometry(0.21, 0.21, 0.3, 10));
+    this.rimGeo = this.trackGeo(new THREE.CylinderGeometry(0.21, 0.21, 0.3, 8));
     this.rimGeo.rotateZ(Math.PI / 2);
 
     this.shadowGeo = this.trackGeo(new THREE.PlaneGeometry(1, 1));
@@ -169,12 +169,10 @@ export class VehicleAssetLibrary {
     for (const hex of palette) {
       this.paintMaterials.push(
         this.trackMat(
-          new THREE.MeshPhysicalMaterial({
+          new THREE.MeshStandardMaterial({
             color: hex,
-            roughness: 0.28,
-            metalness: 0.55,
-            clearcoat: 0.85,
-            clearcoatRoughness: 0.14,
+            roughness: 0.22,
+            metalness: 0.62,
           }),
         ),
       );

@@ -23,7 +23,6 @@ import {
   getLocalBestScore,
   getSavedMuted,
   getSavedPlayerName,
-  resetGlobalLeaderboard,
   saveLocalBestScore,
   saveMuted,
   submitGlobalScore,
@@ -180,13 +179,6 @@ export default function App() {
     setPopups([]);
     setActiveSide(null);
     engineRef.current?.returnToTitle();
-  }, []);
-
-  const handleResetLeaderboard = useCallback(async () => {
-    const updated = await resetGlobalLeaderboard();
-    setLeaderboardEntries(updated);
-    setHighlightedId(null);
-    setSubmittedRank(null);
   }, []);
 
   const handleToggleSound = useCallback(() => {
@@ -752,7 +744,6 @@ export default function App() {
         highlightId={highlightedId}
         onClose={() => setLeaderboardOpen(false)}
         onRefresh={loadLeaderboard}
-        onResetLeaderboard={handleResetLeaderboard}
       />
     </div>
   );

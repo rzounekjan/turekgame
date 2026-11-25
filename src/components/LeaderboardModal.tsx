@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { RefreshCw, Trash2, Trophy, X } from 'lucide-react';
+import React from 'react';
+import { RefreshCw, Trophy, X } from 'lucide-react';
 import type { LeaderboardEntry } from '../types/game';
 
 interface LeaderboardModalProps {
@@ -9,7 +9,6 @@ interface LeaderboardModalProps {
   highlightId?: string | null;
   onClose: () => void;
   onRefresh: () => void;
-  onResetLeaderboard: () => Promise<void>;
 }
 
 const MIN_VISIBLE_SLOTS = 10;
@@ -21,11 +20,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   highlightId,
   onClose,
   onRefresh,
-  onResetLeaderboard,
 }) => {
-  const [confirmingReset, setConfirmingReset] = useState(false);
-  const [resetting, setResetting] = useState(false);
-
   if (!open) return null;
 
   const slotCount = Math.max(MIN_VISIBLE_SLOTS, entries.length);
@@ -33,16 +28,6 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     { length: slotCount },
     (_, i) => entries[i] ?? null,
   );
-
-  const handleConfirmReset = async () => {
-    setResetting(true);
-    try {
-      await onResetLeaderboard();
-      setConfirmingReset(false);
-    } finally {
-      setResetting(false);
-    }
-  };
 
   return (
     <div
@@ -74,10 +59,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => {
-                setConfirmingReset(false);
-                onClose();
-              }}
+              onClick={onClose}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/12 bg-white/5 text-slate-200 transition-colors hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
               aria-label="Zavřít žebříček"
             >
@@ -157,45 +139,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           </table>
         </div>
 
-        {/* Footer with Leaderboard Reset option */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-5 py-3 text-xs">
-          {confirmingReset ? (
-            <div className="flex items-center gap-2">
-              <span className="text-rose-300">Smazat vše?</span>
-              <button
-                type="button"
-                onClick={handleConfirmReset}
-                disabled={resetting}
-                className="rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rose-400 disabled:opacity-50 whitespace-nowrap cursor-pointer"
-              >
-                {resetting ? 'Mažu…' : 'Ano, resetovat'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmingReset(false)}
-                className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white whitespace-nowrap cursor-pointer"
-              >
-                Zrušit
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmingReset(true)}
-              disabled={entries.length === 0}
-              className="flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-rose-400/50 hover:text-rose-300 disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap cursor-pointer"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Resetovat žebříček
-            </button>
-          )}
-
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-white/10 px-5 py-3 text-xs text-slate-400">
+          <span>Top 20 globálních jezdců</span>
           <button
             type="button"
-            onClick={() => {
-              setConfirmingReset(false);
-              onClose();
-            }}
+            onClick={onClose}
             className="rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 whitespace-nowrap shrink-0 cursor-pointer"
           >
             Zavřít

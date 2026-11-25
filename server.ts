@@ -72,11 +72,6 @@ async function startServer() {
     res.json({ entries });
   });
 
-  app.delete('/api/leaderboard', (_req, res) => {
-    saveStore([]);
-    res.json({ entries: [] });
-  });
-
   app.post('/api/leaderboard', (req, res) => {
     const body = req.body ?? {};
     const playerName = sanitizePlayerName(body.playerName);
