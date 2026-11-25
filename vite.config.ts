@@ -31,7 +31,7 @@ export default defineConfig(() => {
         manifest: {
           id: base,
           lang: 'cs',
-          name: 'TUREK — 3D Neon Highway',
+          name: 'TUREK',
           short_name: 'TUREK',
           description:
             '3D neonová arkádová dálniční hra TUREK se 6 pruhy, černým SUV, bonusovými sanitkami a 5 úrovněmi.',
