@@ -2,16 +2,19 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
+  Home,
   Pause,
   Play,
-  RotateCcw,
   Send,
   Trophy,
   Volume2,
   VolumeX,
+  WifiOff,
 } from 'lucide-react';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { NeonLogoT, NeonTitleTurek } from './components/NeonLogo';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { TurekAudioEngine } from './game/audio';
 import { AMBULANCE_HIT_POINTS, LEVELS } from './game/constants';
 import { TurekGameEngine } from './game/engine';
@@ -20,6 +23,7 @@ import {
   getLocalBestScore,
   getSavedMuted,
   getSavedPlayerName,
+  resetGlobalLeaderboard,
   saveLocalBestScore,
   saveMuted,
   submitGlobalScore,
@@ -62,6 +66,7 @@ export default function App() {
   const [popups, setPopups] = useState<ScorePopupEvent[]>([]);
   const [banner, setBanner] = useState<BannerToast | null>(null);
   const [activeSide, setActiveSide] = useState<'left' | 'right' | null>(null);
+  const isOnline = useOnlineStatus();
 
   // Leaderboard state
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
@@ -166,12 +171,22 @@ export default function App() {
     engineRef.current?.startGame();
   }, []);
 
-  const handleReset = useCallback(() => {
+  const handleReturnToTitle = useCallback(() => {
     setSubmittedRank(null);
     setSubmitError(null);
     setHighlightedId(null);
     setLeaderboardOpen(false);
-    engineRef.current?.resetGame();
+    setBanner(null);
+    setPopups([]);
+    setActiveSide(null);
+    engineRef.current?.returnToTitle();
+  }, []);
+
+  const handleResetLeaderboard = useCallback(async () => {
+    const updated = await resetGlobalLeaderboard();
+    setLeaderboardEntries(updated);
+    setHighlightedId(null);
+    setSubmittedRank(null);
   }, []);
 
   const handleToggleSound = useCallback(() => {
@@ -230,14 +245,6 @@ export default function App() {
         return;
       }
 
-      if (e.key === 'r' || e.key === 'R') {
-        if (phase === 'playing' || phase === 'paused' || phase === 'gameover') {
-          e.preventDefault();
-          handleReset();
-        }
-        return;
-      }
-
       if (phase === 'playing' && !e.repeat) {
         if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
           e.preventDefault();
@@ -274,7 +281,7 @@ export default function App() {
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [handleReset, handleStart, handleTogglePause, handleToggleSound, leaderboardOpen]);
+  }, [handleStart, handleTogglePause, handleToggleSound, leaderboardOpen]);
 
   // Left / Right side screen pointer/touch steering handlers
   const handleSidePointerDown = (dir: -1 | 1) => (e: React.PointerEvent<HTMLDivElement>) => {
@@ -454,7 +461,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Right: Sound On/Off, Reset, Leaderboard/Pause Controls (>=44px touch targets) */}
+        {/* Right: Sound On/Off, Pause/Leaderboard, and PWA Install Controls */}
         <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
@@ -468,16 +475,6 @@ export default function App() {
             ) : (
               <Volume2 className="h-5 w-5 text-cyan-300" />
             )}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 bg-[#070c18]/90 text-slate-100 transition-colors hover:border-amber-400/50 hover:text-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 cursor-pointer"
-            aria-label="Resetovat hru"
-            title="Reset (R)"
-          >
-            <RotateCcw className="h-5 w-5" />
           </button>
 
           {hud.phase === 'playing' || hud.phase === 'paused' ? (
@@ -508,8 +505,18 @@ export default function App() {
               <Trophy className="h-5 w-5" />
             </button>
           )}
+
+          <PWAInstallButton />
         </div>
       </header>
+
+      {/* Non-intrusive Offline Connectivity Notice */}
+      {!isOnline && (
+        <div className="pointer-events-none fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-lg border border-amber-400/35 bg-[#0a0f1e]/92 px-3 py-1.5 text-xs font-medium text-amber-200 shadow-lg">
+          <WifiOff className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+          <span>Offline režim</span>
+        </div>
+      )}
 
       {/* Subtle Ambulance Target Cue near bottom edge when an ambulance enters the highway */}
       {hud.phase === 'playing' && hud.ambulanceNearby && (
@@ -592,11 +599,11 @@ export default function App() {
               </button>
               <button
                 type="button"
-                onClick={handleReset}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 font-display text-sm font-semibold text-slate-100 hover:border-amber-400/50 hover:text-amber-200 cursor-pointer"
+                onClick={handleReturnToTitle}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 font-display text-sm font-semibold text-slate-100 hover:border-cyan-400/50 hover:text-cyan-200 cursor-pointer"
               >
-                <RotateCcw className="h-4 w-4" />
-                Resetovat jízdu
+                <Home className="h-4 w-4" />
+                Zpět na úvod
               </button>
             </div>
           </div>
@@ -693,25 +700,35 @@ export default function App() {
             )}
 
             {/* Primary Actions */}
-            <div className="mt-5 flex items-center gap-2.5">
+            <div className="mt-5 flex flex-col gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 font-display text-sm font-extrabold tracking-wide text-slate-950 transition-colors hover:bg-cyan-300 whitespace-nowrap cursor-pointer"
+                >
+                  <Play className="h-4 w-4 fill-slate-950" />
+                  Hrát znovu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeaderboardOpen(true);
+                    loadLeaderboard();
+                  }}
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-4 font-display text-sm font-semibold text-slate-100 transition-colors hover:border-amber-400/50 hover:text-amber-200 whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <Trophy className="h-4 w-4 text-amber-400" />
+                  Žebříček
+                </button>
+              </div>
               <button
                 type="button"
-                onClick={handleReset}
-                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 font-display text-sm font-extrabold tracking-wide text-slate-950 transition-colors hover:bg-cyan-300 whitespace-nowrap cursor-pointer"
+                onClick={handleReturnToTitle}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 font-display text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-400/50 hover:text-cyan-200 whitespace-nowrap cursor-pointer"
               >
-                <RotateCcw className="h-4 w-4" />
-                Hrát znovu
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setLeaderboardOpen(true);
-                  loadLeaderboard();
-                }}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-4 font-display text-sm font-semibold text-slate-100 transition-colors hover:border-amber-400/50 hover:text-amber-200 whitespace-nowrap shrink-0 cursor-pointer"
-              >
-                <Trophy className="h-4 w-4 text-amber-400" />
-                Žebříček
+                <Home className="h-4 w-4" />
+                Zpět na úvodní obrazovku
               </button>
             </div>
           </div>
@@ -726,6 +743,7 @@ export default function App() {
         highlightId={highlightedId}
         onClose={() => setLeaderboardOpen(false)}
         onRefresh={loadLeaderboard}
+        onResetLeaderboard={handleResetLeaderboard}
       />
     </div>
   );

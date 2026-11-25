@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="48%" r="54%">
+      <stop offset="0%" stop-color="#0b1c36" />
+      <stop offset="65%" stop-color="#070b16" />
+      <stop offset="100%" stop-color="#05070f" />
+    </radialGradient>
+    <linearGradient id="neonCyan" x1="80" y1="80" x2="432" y2="432" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#67e8f9" />
+      <stop offset="50%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="neonAmber" x1="120" y1="210" x2="392" y2="210" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#fde047" />
+    </linearGradient>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bgGlow)" />
+
+  <!-- Octagonal neon frame -->
+  <path
+    d="M118 42H394L470 118V394L394 470H118L42 394V118L118 42Z"
+    fill="#070c18"
+    stroke="url(#neonCyan)"
+    stroke-width="14"
+    stroke-opacity="0.9"
+    filter="url(#glow)"
+  />
+
+  <!-- Outer neon tube T -->
+  <path
+    d="M110 128H402V194H292V402H220V194H110V128Z"
+    fill="rgba(0, 240, 255, 0.1)"
+    stroke="#00f0ff"
+    stroke-width="18"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+  />
+
+  <!-- Incandescent white neon filament core -->
+  <path
+    d="M140 161H372M256 161V372"
+    stroke="#f0fdff"
+    stroke-width="15"
+    stroke-linecap="round"
+  />
+
+  <!-- Amber highway accent ticks -->
+  <path
+    d="M148 224H194M318 224H364"
+    stroke="url(#neonAmber)"
+    stroke-width="12"
+    stroke-linecap="round"
+  />
+</svg>

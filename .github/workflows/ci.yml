@@ -1,0 +1,49 @@
+name: CI — Build & Verify PWA
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches-ignore:
+      - main
+      - master
+
+jobs:
+  verify:
+    name: Lint & Build PWA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Type-check TypeScript
+        run: npm run lint
+
+      - name: Build PWA
+        run: npm run build
+
+      - name: Verify PWA build outputs
+        run: |
+          test -f dist/index.html
+          test -f dist/manifest.webmanifest
+          test -f dist/sw.js
+          test -f dist/pwa-192x192.png
+          test -f dist/pwa-512x512.png
+          test -f dist/pwa-maskable-512x512.png
+          test -f dist/apple-touch-icon.png

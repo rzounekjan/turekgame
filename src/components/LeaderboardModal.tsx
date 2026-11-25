@@ -1,5 +1,5 @@
-import React from 'react';
-import { RefreshCw, Trophy, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { RefreshCw, Trash2, Trophy, X } from 'lucide-react';
 import type { LeaderboardEntry } from '../types/game';
 
 interface LeaderboardModalProps {
@@ -9,7 +9,10 @@ interface LeaderboardModalProps {
   highlightId?: string | null;
   onClose: () => void;
   onRefresh: () => void;
+  onResetLeaderboard: () => Promise<void>;
 }
+
+const MIN_VISIBLE_SLOTS = 10;
 
 export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   open,
@@ -18,8 +21,28 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   highlightId,
   onClose,
   onRefresh,
+  onResetLeaderboard,
 }) => {
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
   if (!open) return null;
+
+  const slotCount = Math.max(MIN_VISIBLE_SLOTS, entries.length);
+  const slots: Array<LeaderboardEntry | null> = Array.from(
+    { length: slotCount },
+    (_, i) => entries[i] ?? null,
+  );
+
+  const handleConfirmReset = async () => {
+    setResetting(true);
+    try {
+      await onResetLeaderboard();
+      setConfirmingReset(false);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <div
@@ -51,7 +74,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                setConfirmingReset(false);
+                onClose();
+              }}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/12 bg-white/5 text-slate-200 transition-colors hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
               aria-label="Zavřít žebříček"
             >
@@ -61,77 +87,115 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         </div>
 
         {/* Table Content */}
-        <div className="max-h-[62vh] overflow-y-auto px-5 py-3">
-          {loading && entries.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-400">
-              Načítám nejlepší výsledky…
-            </div>
-          ) : entries.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-400">
-              Zatím zde nejsou žádná skóre. Buďte první na dálnici!
-            </div>
-          ) : (
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10 text-xs text-slate-400">
-                  <th className="py-2.5 pr-2 font-medium w-12">#</th>
-                  <th className="py-2.5 px-2 font-medium">Hráč</th>
-                  <th className="py-2.5 px-2 font-medium text-center">Úroveň</th>
-                  <th className="py-2.5 px-2 font-medium text-center">Sanitky</th>
-                  <th className="py-2.5 pl-2 font-medium text-right">Skóre</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/6">
-                {entries.map((item, idx) => {
-                  const rank = idx + 1;
-                  const isHighlighted = highlightId != null && item.id === highlightId;
-                  const rankColor =
-                    rank === 1
-                      ? 'text-amber-300 font-bold'
-                      : rank === 2
-                        ? 'text-slate-200 font-bold'
-                        : rank === 3
-                          ? 'text-orange-300 font-bold'
-                          : 'text-slate-400';
+        <div className="max-h-[60vh] overflow-y-auto px-5 py-3">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-xs text-slate-400">
+                <th className="py-2.5 pr-2 font-medium w-12">#</th>
+                <th className="py-2.5 px-2 font-medium">Hráč</th>
+                <th className="py-2.5 px-2 font-medium text-center">Úroveň</th>
+                <th className="py-2.5 px-2 font-medium text-center">Sanitky</th>
+                <th className="py-2.5 pl-2 font-medium text-right">Skóre</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/6">
+              {slots.map((item, idx) => {
+                const rank = idx + 1;
+                const rankColor =
+                  rank === 1
+                    ? 'text-amber-300 font-bold'
+                    : rank === 2
+                      ? 'text-slate-200 font-bold'
+                      : rank === 3
+                        ? 'text-orange-300 font-bold'
+                        : 'text-slate-400';
 
+                if (!item) {
                   return (
-                    <tr
-                      key={item.id}
-                      className={
-                        isHighlighted
-                          ? 'bg-cyan-500/15 text-white'
-                          : 'text-slate-200 hover:bg-white/[0.03]'
-                      }
-                    >
+                    <tr key={`empty-${rank}`} className="text-slate-500">
                       <td className={`py-2.5 pr-2 font-mono-num ${rankColor}`}>
                         {rank}.
                       </td>
-                      <td className="py-2.5 px-2 font-medium truncate max-w-[150px]">
-                        {item.playerName}
-                      </td>
-                      <td className="py-2.5 px-2 text-center font-mono-num text-slate-300">
-                        {item.level}/5
-                      </td>
-                      <td className="py-2.5 px-2 text-center font-mono-num text-amber-300">
-                        {item.ambulancesHit}
-                      </td>
-                      <td className="py-2.5 pl-2 text-right font-mono-num font-bold text-cyan-300">
-                        {item.score}
-                      </td>
+                      <td className="py-2.5 px-2 font-mono-num tracking-widest">...</td>
+                      <td className="py-2.5 px-2 text-center font-mono-num">...</td>
+                      <td className="py-2.5 px-2 text-center font-mono-num">...</td>
+                      <td className="py-2.5 pl-2 text-right font-mono-num">...</td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          )}
+                }
+
+                const isHighlighted = highlightId != null && item.id === highlightId;
+
+                return (
+                  <tr
+                    key={item.id}
+                    className={
+                      isHighlighted
+                        ? 'bg-cyan-500/15 text-white'
+                        : 'text-slate-200 hover:bg-white/[0.03]'
+                    }
+                  >
+                    <td className={`py-2.5 pr-2 font-mono-num ${rankColor}`}>
+                      {rank}.
+                    </td>
+                    <td className="py-2.5 px-2 font-medium truncate max-w-[150px]">
+                      {item.playerName}
+                    </td>
+                    <td className="py-2.5 px-2 text-center font-mono-num text-slate-300">
+                      {item.level}/5
+                    </td>
+                    <td className="py-2.5 px-2 text-center font-mono-num text-amber-300">
+                      {item.ambulancesHit}
+                    </td>
+                    <td className="py-2.5 pl-2 text-right font-mono-num font-bold text-cyan-300">
+                      {item.score}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between border-t border-white/10 px-5 py-3 text-xs text-slate-400">
-          <span>Top 20 globálních jezdců</span>
+        {/* Footer with Leaderboard Reset option */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-5 py-3 text-xs">
+          {confirmingReset ? (
+            <div className="flex items-center gap-2">
+              <span className="text-rose-300">Smazat vše?</span>
+              <button
+                type="button"
+                onClick={handleConfirmReset}
+                disabled={resetting}
+                className="rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rose-400 disabled:opacity-50 whitespace-nowrap cursor-pointer"
+              >
+                {resetting ? 'Mažu…' : 'Ano, resetovat'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingReset(false)}
+                className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white whitespace-nowrap cursor-pointer"
+              >
+                Zrušit
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingReset(true)}
+              disabled={entries.length === 0}
+              className="flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-rose-400/50 hover:text-rose-300 disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Resetovat žebříček
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              setConfirmingReset(false);
+              onClose();
+            }}
             className="rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 whitespace-nowrap shrink-0 cursor-pointer"
           >
             Zavřít

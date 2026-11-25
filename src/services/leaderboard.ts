@@ -1,20 +1,9 @@
 import type { LeaderboardEntry } from '../types/game';
 
-const LOCAL_FALLBACK_KEY = 'turek_global_leaderboard_cache_v1';
+const LOCAL_FALLBACK_KEY = 'turek_global_leaderboard_cache_v2';
 const PLAYER_NAME_KEY = 'turek_player_name_v1';
 const BEST_SCORE_KEY = 'turek_best_local_score_v1';
 const MUTED_KEY = 'turek_audio_muted_v1';
-
-const FALLBACK_ENTRIES: LeaderboardEntry[] = [
-  { id: 'f1', playerName: 'MAREK_GT', score: 168, level: 5, ambulancesHit: 9, createdAt: '2026-11-20T18:40:00.000Z' },
-  { id: 'f2', playerName: 'TERKA_CZ', score: 134, level: 5, ambulancesHit: 7, createdAt: '2026-11-21T14:15:00.000Z' },
-  { id: 'f3', playerName: 'KUBA_99', score: 102, level: 4, ambulancesHit: 6, createdAt: '2026-11-22T20:05:00.000Z' },
-  { id: 'f4', playerName: 'DOMINIK', score: 84, level: 4, ambulancesHit: 4, createdAt: '2026-11-23T09:50:00.000Z' },
-  { id: 'f5', playerName: 'ELISKA_V8', score: 63, level: 3, ambulancesHit: 3, createdAt: '2026-11-23T19:10:00.000Z' },
-  { id: 'f6', playerName: 'PETR_X', score: 48, level: 3, ambulancesHit: 2, createdAt: '2026-11-24T11:22:00.000Z' },
-  { id: 'f7', playerName: 'FILIP_PRO', score: 31, level: 2, ambulancesHit: 2, createdAt: '2026-11-24T16:45:00.000Z' },
-  { id: 'f8', playerName: 'LUKAS', score: 19, level: 1, ambulancesHit: 1, createdAt: '2026-11-25T08:12:00.000Z' },
-];
 
 export function getSavedPlayerName(): string {
   try {
@@ -71,11 +60,11 @@ export function saveMuted(muted: boolean): void {
 function readLocalCache(): LeaderboardEntry[] {
   try {
     const raw = localStorage.getItem(LOCAL_FALLBACK_KEY);
-    if (!raw) return [...FALLBACK_ENTRIES];
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : [...FALLBACK_ENTRIES];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return [...FALLBACK_ENTRIES];
+    return [];
   }
 }
 
@@ -90,7 +79,10 @@ function writeLocalCache(entries: LeaderboardEntry[]): void {
 export async function fetchGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
     const res = await fetch('/api/leaderboard', { cache: 'no-store' });
-    if (!res.ok) throw new Error('API unavailable');
+    const contentType = res.headers.get('content-type') || '';
+    if (!res.ok || !contentType.includes('application/json')) {
+      throw new Error('API unavailable');
+    }
     const data = await res.json();
     if (Array.isArray(data.entries)) {
       writeLocalCache(data.entries);
@@ -115,6 +107,10 @@ export async function submitGlobalScore(payload: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error('Static host');
+    }
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.error || 'Nepodařilo se uložit skóre.');
@@ -129,7 +125,7 @@ export async function submitGlobalScore(payload: {
       rank: Number(data.rank ?? 1),
     };
   } catch {
-    // Graceful local persistence fallback if offline
+    // Graceful local persistence fallback on static hosts (GitHub Pages) or offline mode
     const fallbackEntry: LeaderboardEntry = {
       id: `local-${Date.now()}`,
       playerName: payload.playerName.trim().slice(0, 16),
@@ -145,4 +141,14 @@ export async function submitGlobalScore(payload: {
     const rank = merged.findIndex((e) => e.id === fallbackEntry.id) + 1;
     return { entries: merged, entry: fallbackEntry, rank: rank || 20 };
   }
+}
+
+export async function resetGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
+  writeLocalCache([]);
+  try {
+    await fetch('/api/leaderboard', { method: 'DELETE' });
+  } catch {
+    // Offline or static host — local cache already cleared
+  }
+  return [];
 }

@@ -641,12 +641,33 @@ export class TurekGameEngine {
     this.emitHud();
   }
 
-  public resetGame(): void {
-    if (this.phase === 'title') {
-      this.startGame();
-      return;
-    }
-    this.startGame();
+  public returnToTitle(): void {
+    this.audio.stopMusic();
+    this.phase = 'title';
+    this.score = 0;
+    this.currentLevel = 1;
+    this.lastSpeedStep = 0;
+    this.dodgedCars = 0;
+    this.ambulancesHit = 0;
+    this.playerLane = 2;
+    this.playerX = getLaneX(2);
+    this.playerRoll = 0;
+    this.playerSquash = 1;
+    this.playerHitFlash = 0;
+    this.heldDir = 0;
+    this.shakeIntensity = 0;
+    this.hitstopTimer = 0;
+    this.carsSinceAmbulance = 0;
+    this.nextAmbulanceTarget = randInt(AMBULANCE_MIN_INTERVAL, AMBULANCE_MAX_INTERVAL);
+    this.spawnTimer = 0.6;
+
+    this.playerRig.group.position.set(this.playerX, 0, PLAYER_Z);
+    this.playerRig.group.rotation.set(0, 0, 0);
+    this.playerRig.group.scale.set(1, 1, 1);
+
+    this.applyLevelAtmosphere(LEVELS[0], true);
+    this.seedInitialDemoTraffic();
+    this.emitHud();
   }
 
   public togglePause(): void {
