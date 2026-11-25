@@ -1,9 +1,24 @@
 import type { LeaderboardEntry } from '../types/game';
 
-const LOCAL_FALLBACK_KEY = 'turek_global_leaderboard_cache_v2';
+const LOCAL_FALLBACK_KEY = 'turek_global_leaderboard_cache_v3';
+const LEGACY_CACHE_KEYS = [
+  'turek_global_leaderboard_cache_v1',
+  'turek_global_leaderboard_cache_v2',
+];
 const PLAYER_NAME_KEY = 'turek_player_name_v1';
 const BEST_SCORE_KEY = 'turek_best_local_score_v1';
 const MUTED_KEY = 'turek_audio_muted_v1';
+
+// Clean up any pre-reset cached leaderboard entries in browser storage
+try {
+  if (typeof localStorage !== 'undefined') {
+    for (const key of LEGACY_CACHE_KEYS) {
+      localStorage.removeItem(key);
+    }
+  }
+} catch {
+  // Ignore storage errors
+}
 
 export function getSavedPlayerName(): string {
   try {
