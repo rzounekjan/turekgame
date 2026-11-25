@@ -375,19 +375,19 @@ export default function App() {
           <div
             key={pop.id}
             style={{ left: `${pop.xPercent}%`, top: `${pop.yPercent}%` }}
-            className="animate-score-pop absolute flex flex-col items-center whitespace-nowrap"
+            className="animate-score-pop absolute flex max-w-[46vw] flex-col items-center text-center"
           >
             <span
-              className={`font-display font-extrabold tracking-wider ${
+              className={`font-display font-extrabold tracking-wider whitespace-nowrap ${
                 pop.kind === 'ambulance'
-                  ? 'text-2xl sm:text-3xl neon-text-amber'
-                  : 'text-lg text-cyan-200'
+                  ? 'text-xl sm:text-3xl neon-text-amber'
+                  : 'text-base sm:text-lg text-cyan-200'
               }`}
             >
               {pop.text}
             </span>
             {pop.subtext && (
-              <span className="font-display text-[11px] font-bold tracking-[0.18em] text-amber-300">
+              <span className="font-display text-[10px] sm:text-[11px] font-bold tracking-[0.12em] sm:tracking-[0.18em] text-amber-300 whitespace-nowrap">
                 {pop.subtext}
               </span>
             )}
@@ -399,36 +399,41 @@ export default function App() {
       {banner && hud.phase === 'playing' && (
         <div
           key={banner.id}
-          className="pointer-events-none animate-level-toast absolute left-1/2 top-20 z-30 flex flex-col items-center rounded-lg border border-white/15 bg-[#080d1a]/92 px-5 py-2.5 text-center shadow-lg"
+          className="pointer-events-none animate-level-toast absolute left-1/2 top-[4.5rem] sm:top-20 z-30 flex w-max max-w-[calc(100vw-1.5rem)] flex-col items-center rounded-lg border border-white/15 bg-[#080d1a]/92 px-3.5 py-2 sm:px-5 sm:py-2.5 text-center shadow-lg"
         >
           <span
-            className="font-display text-sm sm:text-base font-extrabold tracking-[0.14em]"
+            className="font-display text-xs sm:text-base font-extrabold tracking-[0.1em] sm:tracking-[0.14em]"
             style={{ color: banner.accent }}
           >
             {banner.title}
           </span>
-          <span className="text-xs text-slate-300">{banner.subtitle}</span>
+          <span className="text-[11px] sm:text-xs text-slate-300 leading-snug">{banner.subtitle}</span>
         </div>
       )}
 
       {/* Low-Occlusion Top Perimeter HUD Bar (pointer-events-none wrapper, no backdrop-filter) */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 px-3 pt-3 sm:px-5 sm:pt-4">
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-1.5 sm:gap-2 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-5 sm:pt-4">
         {/* Left: Neon T Logo + Active Level Readout */}
-        <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-[#070c18]/88 px-3 py-2">
-          <NeonLogoT size={34} />
-          <div className="flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="font-display text-sm sm:text-base font-bold tracking-[0.12em] neon-text-cyan whitespace-nowrap">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rounded-xl border border-white/10 bg-[#070c18]/88 px-2 py-1.5 sm:px-3 sm:py-2">
+          <NeonLogoT size={28} className="sm:h-[34px] sm:w-[34px]" />
+          <div className="flex min-w-0 flex-col">
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span
+                className={`font-display text-xs sm:text-base font-bold tracking-[0.1em] sm:tracking-[0.12em] neon-text-cyan whitespace-nowrap ${
+                  hud.phase !== 'title' ? 'hidden sm:inline' : ''
+                }`}
+              >
                 TUREK
               </span>
               {hud.phase !== 'title' && (
-                <span className="font-mono-num text-xs font-semibold text-slate-300 whitespace-nowrap">
-                  Úroveň {hud.level}/5
+                <span className="font-mono-num text-[11px] sm:text-xs font-semibold text-slate-200 whitespace-nowrap">
+                  <span className="sm:hidden">Úr. {hud.level}/5</span>
+                  <span className="hidden sm:inline">Úroveň {hud.level}/5</span>
                 </span>
               )}
             </div>
             {hud.phase !== 'title' ? (
-              <div className="mt-1 h-1 w-24 sm:w-28 overflow-hidden rounded-full bg-white/10">
+              <div className="mt-1 h-1 w-12 sm:w-28 overflow-hidden rounded-full bg-white/10">
                 <div
                   className="h-full transition-transform duration-200 origin-left"
                   style={{
@@ -438,7 +443,7 @@ export default function App() {
                 />
               </div>
             ) : (
-              <span className="text-[11px] text-slate-400 whitespace-nowrap">
+              <span className="text-[10px] sm:text-[11px] text-slate-400 whitespace-nowrap">
                 6 pruhů · 5 úrovní
               </span>
             )}
@@ -447,33 +452,34 @@ export default function App() {
 
         {/* Center: Live Score & Speed during Gameplay */}
         {hud.phase !== 'title' && (
-          <div className="flex flex-col items-center rounded-xl border border-white/10 bg-[#070c18]/88 px-4 py-1.5 sm:px-6">
-            <span className="font-mono-num text-2xl sm:text-3xl font-bold leading-none text-white">
+          <div className="flex min-w-0 flex-col items-center rounded-xl border border-white/10 bg-[#070c18]/88 px-2.5 py-1 sm:px-6 sm:py-1.5">
+            <span className="font-mono-num text-xl sm:text-3xl font-bold leading-none text-white">
               {hud.score}
             </span>
-            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-400 whitespace-nowrap">
+            <div className="mt-0.5 flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-slate-400 whitespace-nowrap">
               <span className="font-mono-num text-cyan-300">{hud.speedKmh} km/h</span>
               <span aria-hidden="true">·</span>
               <span className="font-mono-num text-amber-300">
-                Sanitky: {hud.ambulancesHit}
+                <span className="sm:hidden">San.: {hud.ambulancesHit}</span>
+                <span className="hidden sm:inline">Sanitky: {hud.ambulancesHit}</span>
               </span>
             </div>
           </div>
         )}
 
         {/* Right: Sound On/Off, Pause/Leaderboard, and PWA Install Controls */}
-        <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="pointer-events-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <button
             type="button"
             onClick={handleToggleSound}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 bg-[#070c18]/90 text-slate-100 transition-colors hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
+            className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-white/12 bg-[#070c18]/90 text-slate-100 transition-colors hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
             aria-label={muted ? 'Zapnout zvuk' : 'Vypnout zvuk'}
             title={muted ? 'Zapnout zvuk (M)' : 'Vypnout zvuk (M)'}
           >
             {muted ? (
-              <VolumeX className="h-5 w-5 text-rose-400" />
+              <VolumeX className="h-4 w-4 sm:h-5 sm:w-5 text-rose-400" />
             ) : (
-              <Volume2 className="h-5 w-5 text-cyan-300" />
+              <Volume2 className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-300" />
             )}
           </button>
 
@@ -481,14 +487,14 @@ export default function App() {
             <button
               type="button"
               onClick={handleTogglePause}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 bg-[#070c18]/90 text-slate-100 transition-colors hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
+              className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-white/12 bg-[#070c18]/90 text-slate-100 transition-colors hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 cursor-pointer"
               aria-label={hud.phase === 'paused' ? 'Pokračovat' : 'Pozastavit'}
               title={hud.phase === 'paused' ? 'Pokračovat (Esc)' : 'Pauza (Esc)'}
             >
               {hud.phase === 'paused' ? (
-                <Play className="h-5 w-5 text-cyan-300" />
+                <Play className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-300" />
               ) : (
-                <Pause className="h-5 w-5" />
+                <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
               )}
             </button>
           ) : (
@@ -498,11 +504,11 @@ export default function App() {
                 setLeaderboardOpen(true);
                 loadLeaderboard();
               }}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 bg-[#070c18]/90 text-amber-300 transition-colors hover:border-amber-400/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 cursor-pointer"
+              className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-white/12 bg-[#070c18]/90 text-amber-300 transition-colors hover:border-amber-400/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 cursor-pointer"
               aria-label="Globální žebříček"
               title="Globální žebříček"
             >
-              <Trophy className="h-5 w-5" />
+              <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           )}
 
@@ -512,22 +518,25 @@ export default function App() {
 
       {/* Non-intrusive Offline Connectivity Notice */}
       {!isOnline && (
-        <div className="pointer-events-none fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-lg border border-amber-400/35 bg-[#0a0f1e]/92 px-3 py-1.5 text-xs font-medium text-amber-200 shadow-lg">
+        <div className="pointer-events-none fixed bottom-4 left-3 z-40 flex items-center gap-2 rounded-lg border border-amber-400/35 bg-[#0a0f1e]/92 px-3 py-1.5 text-xs font-medium text-amber-200 shadow-lg">
           <WifiOff className="h-3.5 w-3.5 text-amber-400 shrink-0" />
           <span>Offline režim</span>
         </div>
       )}
 
-      {/* Subtle Ambulance Target Cue near bottom edge when an ambulance enters the highway */}
+      {/* Responsive Ambulance Target Cue near bottom edge (never overflows narrow phones) */}
       {hud.phase === 'playing' && hud.ambulanceNearby && (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-lg border border-amber-400/35 bg-[#090e1c]/90 px-3.5 py-1.5 text-xs font-display font-bold tracking-wider text-amber-300 whitespace-nowrap">
-          SANITKA NA DÁLNICI · SRAZ JI PRO +{AMBULANCE_HIT_POINTS} BODŮ
+        <div className="pointer-events-none absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 w-max max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-lg border border-amber-400/35 bg-[#090e1c]/92 px-3 py-1.5 text-center font-display text-[11px] sm:text-xs font-bold tracking-wide sm:tracking-wider text-amber-300 leading-snug">
+          <span className="sm:hidden">SANITKA · SRAZ JI (+{AMBULANCE_HIT_POINTS} BODŮ)</span>
+          <span className="hidden sm:inline">
+            SANITKA NA DÁLNICI · SRAZ JI PRO +{AMBULANCE_HIT_POINTS} BODŮ
+          </span>
         </div>
       )}
 
       {/* TITLE SCREEN OVERLAY */}
       {hud.phase === 'title' && (
-        <main className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gradient-to-b from-[#050814]/80 via-[#050814]/45 to-[#050814]/88 px-5 text-center">
+        <main className="absolute inset-0 z-20 flex flex-col items-center justify-center overflow-y-auto bg-gradient-to-b from-[#050814]/80 via-[#050814]/45 to-[#050814]/88 px-4 py-20 text-center">
           <NeonTitleTurek className="mb-5" />
 
           <p className="max-w-md text-sm sm:text-base text-slate-200 leading-relaxed mb-7">
@@ -618,7 +627,7 @@ export default function App() {
           aria-modal="true"
           aria-label="Konec jízdy"
         >
-          <div className="w-full max-w-md rounded-xl border border-cyan-400/25 bg-[#0b1120] p-6 shadow-2xl">
+          <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl border border-cyan-400/25 bg-[#0b1120] p-4 sm:p-6 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-medium text-rose-400">Konec jízdy</p>

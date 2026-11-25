@@ -24,7 +24,7 @@ export const PWAInstallButton: React.FC = () => {
       <button
         type="button"
         onClick={handleClick}
-        className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-cyan-400/50 bg-cyan-400/15 px-3 sm:px-3.5 font-display text-xs font-bold tracking-wider text-cyan-200 transition-colors hover:bg-cyan-400 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 whitespace-nowrap shrink-0 cursor-pointer"
+        className="flex h-10 w-10 sm:h-11 sm:w-auto items-center justify-center gap-1.5 rounded-xl border border-cyan-400/50 bg-cyan-400/15 sm:px-3.5 font-display text-xs font-bold tracking-wider text-cyan-200 transition-colors hover:bg-cyan-400 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 whitespace-nowrap shrink-0 cursor-pointer"
         aria-label="Nainstalovat aplikaci TUREK"
         title="Nainstalovat aplikaci TUREK (PWA)"
       >

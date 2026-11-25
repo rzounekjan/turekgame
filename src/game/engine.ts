@@ -1211,8 +1211,8 @@ export class TurekGameEngine {
 
   private projectToScreenPercent(x: number, y: number, z: number): { xPercent: number; yPercent: number } {
     _projVec.set(x, y, z).project(this.camera);
-    const xPercent = THREE.MathUtils.clamp((_projVec.x * 0.5 + 0.5) * 100, 14, 86);
-    const yPercent = THREE.MathUtils.clamp((-_projVec.y * 0.5 + 0.5) * 100, 18, 78);
+    const xPercent = THREE.MathUtils.clamp((_projVec.x * 0.5 + 0.5) * 100, 24, 76);
+    const yPercent = THREE.MathUtils.clamp((-_projVec.y * 0.5 + 0.5) * 100, 20, 76);
     return { xPercent, yPercent };
   }
 
