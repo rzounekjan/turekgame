@@ -30,6 +30,7 @@ export default defineConfig(() => {
         ],
         manifest: {
           id: base,
+          lang: 'cs',
           name: 'TUREK — 3D Neon Highway',
           short_name: 'TUREK',
           description:

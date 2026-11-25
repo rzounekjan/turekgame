@@ -22,14 +22,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then
             npm ci
           else
-            npm install
+            npm install --no-audit --no-fund --legacy-peer-deps
           fi
 
       - name: Type-check TypeScript
